@@ -2,6 +2,13 @@ const xStart = document.querySelector(".choice-box__container-x");
 const oStart = document.querySelector(".choice-box__container-o");
 const btnVsCPU = document.querySelector(".btn-vs-cpu");
 const btnVsPlayer = document.querySelector(".btn-vs-player");
+const btnRestart = document.querySelector(".restart-btn");
+const btnTieNext = document.querySelector(".tie-screen .btn-next-round");
+const btnTieQuit = document.querySelector(".tie-screen .btn-quit");
+const btnWinNext = document.querySelector(".win-screen .btn-next-round");
+const btnWinQuit = document.querySelector(".win-screen .btn-quit");
+const btnCancel = document.querySelector(".restart-screen .btn-cancel");
+const btnRestartGame = document.querySelector(".restart-screen .btn-restart");
 const turnX = document.querySelector(".turn-x");
 const turnO = document.querySelector(".turn-o");
 
@@ -18,6 +25,9 @@ const crossWinContainer = document.querySelector(".cross-win-container");
 const cellsContainer = document.querySelector(".cells-container");
 const turnContainer = document.querySelector(".turn-icon");
 const cells = document.querySelectorAll(".cell");
+
+const xPlayer = document.querySelector(".x-player");
+const oPlayer = document.querySelector(".o-player");
 
 const xIconLink = "assets/images/icon-x.svg";
 const xOutlineLink = "assets/images/icon-x-outline.svg";
@@ -89,22 +99,129 @@ class GameBoard {
     this.oScore = 0;
   }
 
+  nextRound() {
+    gameState = ["", "", "", "", "", "", "", "", ""];
+    cells.forEach((cell) => {
+      cell.classList.remove("active", "x", "o");
+      cell.querySelector("img").src = "";
+      cell.style.boxShadow = "inset 0 -0.8rem 0 #111c22";
+      cell.style.backgroundColor = "#1f3641";
+    });
+
+    crossWinContainer.style.display = "none";
+    circleWinContainer.style.display = "none";
+    overlay.style.display = "none";
+    banner.style.display = "none";
+    winScreen.style.display = "none";
+    tieScreen.style.display = "none";
+
+    this.turnIcon = this.playerMark === "O" ? oTurnIcon : xTurnIcon;
+    turnContainer.innerHTML = this.turnIcon;
+
+    if (!this.isMultiPlayer && this.playerMark === "O") {
+      this.computerMove();
+      cellsContainer.classList.remove("no-click");
+    } else if (this.playerMark === "X") {
+      this.switchPlayer();
+      cellsContainer.classList.remove("no-click");
+    }
+  }
+
+  resetGame() {
+    gameState = ["", "", "", "", "", "", "", "", ""];
+    this.xScore = 0;
+    this.oScore = 0;
+    this.ties = 0;
+    countX.textContent = "0";
+    countO.textContent = "0";
+    countTie.textContent = "0";
+    cells.forEach((cell) => {
+      cell.classList.remove("active", "x", "o");
+      cell.querySelector("img").src = "";
+      cell.style.boxShadow = "inset 0 -0.8rem 0 #111c22";
+      cell.style.backgroundColor = "#1f3641";
+    });
+    crossWinContainer.style.display = "none";
+    circleWinContainer.style.display = "none";
+    overlay.style.display = "none";
+    banner.style.display = "none";
+    winScreen.style.display = "none";
+    tieScreen.style.display = "none";
+    restartScreen.style.display = "none";
+    cellsContainer.classList.remove("no-click");
+  }
+
+  quitGame() {
+    this.resetGame();
+    startScreen.classList.add("start-visible");
+    gameScreen.classList.remove("game-visible");
+    cellsContainer.classList.remove("no-click");
+  }
+
+  displayTie() {
+    overlay.style.display = "flex";
+    banner.style.display = "flex";
+    tieScreen.style.display = "flex";
+    tieScreen.style.flexDirection = "column";
+    btnTieQuit.style.display = "flex";
+    btnTieNext.style.display = "flex";
+  }
+
   checkTie() {
-    this.ties++;
-    countTie.textContent = this.ties;
+    let countEmptyCells = 0;
+    cells.forEach((cell) => {
+      if (!cell.classList.contains("active")) countEmptyCells++;
+    });
+    if (countEmptyCells === 0) {
+      this.ties++;
+      countTie.textContent = this.ties;
+      return true;
+    }
+    return false;
+  }
+
+  assignWinner(winningMark) {
+    if (this.isMultiPlayer) {
+      if (winningMark === "X") {
+        this.winner = xPlayer.textContent === "P1" ? "Player 1" : "Player 2";
+      } else {
+        this.winner = oPlayer.textContent === "P1" ? "Player 1" : "Player 2";
+      }
+    } else {
+      if (this.playerMark === winningMark) this.winner = "Player";
+      else this.winner = "Computer";
+    }
+  }
+
+  markWinningCells(a, b, c, winnerIcon) {
+    cells[a].style.backgroundColor =
+      winnerIcon === xWinner ? "#65E9E4" : "#F2B137";
+    cells[b].style.backgroundColor =
+      winnerIcon === xWinner ? "#65E9E4" : "#F2B137";
+    cells[c].style.backgroundColor =
+      winnerIcon === xWinner ? "#65E9E4" : "#F2B137";
+    cells[a].querySelector("img").src = winnerIcon;
+    cells[b].querySelector("img").src = winnerIcon;
+    cells[c].querySelector("img").src = winnerIcon;
   }
 
   displayWinner() {
+    winScreenText.style.display = "block";
     overlay.style.display = "flex";
     banner.style.display = "flex";
     winScreen.style.display = "flex";
     winScreen.style.flexDirection = "column";
+    btnWinNext.style.display = "flex";
+    btnWinQuit.style.display = "flex";
     if (this.winnerMark === "X") crossWinContainer.style.display = "flex";
     else circleWinContainer.style.display = "flex";
-    if (this.isMultiPlayer)
+
+    if (this.isMultiPlayer) {
+      winScreenText.textContent = `${this.winner.toUpperCase()} WINS!`;
+    } else {
       winScreenText.textContent =
-        this.winner === "Player" ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-    else this.winner === "Player" ? "YOU WON!" : "YOU LOST...";
+        this.winner === "Player" ? "YOU WON!" : "YOU LOST...";
+    }
   }
 
   checkWinner() {
@@ -112,40 +229,18 @@ class GameBoard {
       const [a, b, c] = winningConditions[i];
       if (gameState[a] === gameState[b] && gameState[b] === gameState[c]) {
         if (gameState[a] === "X") {
-          cells[a].style.backgroundColor = "#65E9E4";
-          cells[b].style.backgroundColor = "#65E9E4";
-          cells[c].style.backgroundColor = "#65E9E4";
-          cells[a].querySelector("img").src = xWinner;
-          cells[b].querySelector("img").src = xWinner;
-          cells[c].querySelector("img").src = xWinner;
-          this.xScore++;
+          this.markWinningCells(a, b, c, xWinner);
           this.winnerMark = "X";
+          this.xScore++;
           countX.textContent = this.xScore;
-          if (!this.isMultiPlayer) {
-            if (this.playerMark === "X") this.winner = "Player";
-            else this.winner = "Computer";
-          } else {
-            if (this.playerMark === "X") this.winner = "Player";
-            else this.winner = "Player 2";
-          }
+          this.assignWinner("X");
           return true;
         } else if (gameState[a] === "O") {
-          cells[a].style.backgroundColor = "#F2B137";
-          cells[b].style.backgroundColor = "#F2B137";
-          cells[c].style.backgroundColor = "#F2B137";
-          cells[a].querySelector("img").src = oWinner;
-          cells[b].querySelector("img").src = oWinner;
-          cells[c].querySelector("img").src = oWinner;
+          this.markWinningCells(a, b, c, oWinner);
           this.winnerMark = "O";
           this.oScore++;
           countO.textContent = this.oScore;
-          if (!this.isMultiPlayer) {
-            if (this.playerMark === "O") this.winner = "Player";
-            else this.winner = "Computer";
-          } else {
-            if (this.playerMark === "O") this.winner = "Player";
-            else this.winner = "Player 2";
-          }
+          this.assignWinner("O");
           return true;
         }
       }
@@ -207,6 +302,8 @@ class GameBoard {
         gameState[randomCell.index] = this.playerMark === "O" ? "X" : "O";
         if (this.checkWinner()) {
           this.displayWinner();
+        } else if (this.checkTie()) {
+          this.displayTie();
         } else {
           this.switchPlayer();
           cellsContainer.classList.remove("no-click");
@@ -228,6 +325,8 @@ class GameBoard {
       this.switchPlayer();
       if (this.checkWinner()) {
         this.displayWinner();
+      } else if (this.checkTie()) {
+        this.displayTie();
       } else {
         if (!this.isMultiPlayer) {
           this.computerMove();
@@ -253,21 +352,52 @@ btnVsCPU.addEventListener("click", () => {
 
 btnVsPlayer.addEventListener("click", () => {
   newGame = new GameBoard(true, "X");
+  if (xPlayer.textContent === "(YOU)") {
+    xPlayer.textContent = "P1";
+    oPlayer.textContent = "P2";
+  } else {
+    xPlayer.textContent = "P2";
+    oPlayer.textContent = "P1";
+  }
   newGame.startGame();
 });
 
 xStart.addEventListener("click", () => {
   xStart.classList.add("active");
   oStart.classList.remove("active");
+  xPlayer.textContent = "(YOU)";
+  oPlayer.textContent = "(CPU)";
   playerMark = "X";
 });
 
 oStart.addEventListener("click", () => {
   oStart.classList.add("active");
   xStart.classList.remove("active");
+  xPlayer.textContent = "(CPU)";
+  oPlayer.textContent = "(YOU)";
   playerMark = "O";
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   startScreen.classList.add("start-visible");
+});
+
+btnTieNext.addEventListener("click", () => newGame.nextRound());
+btnWinNext.addEventListener("click", () => newGame.nextRound());
+btnTieQuit.addEventListener("click", () => newGame.quitGame());
+btnWinQuit.addEventListener("click", () => newGame.quitGame());
+btnRestart.addEventListener("click", () => {
+  overlay.style.display = "flex";
+  banner.style.display = "flex";
+  restartScreen.style.display = "flex";
+  btnCancel.style.display = "block";
+  btnRestartGame.style.display = "block";
+});
+btnRestartGame.addEventListener("click", () => newGame.resetGame());
+btnCancel.addEventListener("click", () => {
+  overlay.style.display = "none";
+  banner.style.display = "none";
+  restartScreen.style.display = "none";
+  btnCancel.style.display = "none";
+  btnRestartGame.style.display = "none";
 });

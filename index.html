@@ -20,13 +20,17 @@
       <article class="banner">
         <section class="restart-screen">
           <p class="restart-title">RESTART GAME?</p>
-          <button class="btn-cancel">NO, CANCEL</button
-          ><button class="btn-restart">YES, RESTART</button>
+          <div class="restart-btns-container">
+            <button class="btn-cancel">NO, CANCEL</button
+            ><button class="btn-restart">YES, RESTART</button>
+          </div>
         </section>
         <section class="tie-screen">
           <p class="tie-title">ROUND TIED</p>
-          <button class="btn-quit">QUIT</button
-          ><button class="btn-next-round">NEXT ROUND</button>
+          <div class="tie-btns-container">
+            <button class="btn-quit">QUIT</button
+            ><button class="btn-next-round">NEXT ROUND</button>
+          </div>
         </section>
         <section class="win-screen">
           <p class="win-screen-result__text">PLAYER 1 WINS!</p>
@@ -128,7 +132,7 @@
           <div class="x-score">
             <div class="x-header">
               X&nbsp;
-              <div class="x-player">(YOU)</div>
+              <div class="x-player">(CPU)</div>
             </div>
             <div class="count count-x">0</div>
           </div>
@@ -139,7 +143,7 @@
           <div class="o-score">
             <div class="o-header">
               O&nbsp;
-              <div class="o-player">(CPU)</div>
+              <div class="o-player">(YOU)</div>
             </div>
             <div class="count count-o">0</div>
           </div>
